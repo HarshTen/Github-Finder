@@ -2,8 +2,6 @@
 <?php
 require 'verify.php';
 
-// var_dump($_SESSION);
-
 ?>
 <!DOCTYPE html>
 <html>
