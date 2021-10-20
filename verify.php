@@ -2,7 +2,7 @@
 
 $msg="";
 
-require 'db.php';
+require 'config.php';
 
 
 if (isset($_POST['submit'])){
@@ -11,41 +11,34 @@ if (isset($_POST['submit'])){
 
 regenerateVerify();
 
-
-
-
 function regenerateVerify(){
 
     if(!empty($_GET['reverify']) && !empty($_GET['email'])){
         global $con;
 
-
-         $email =   $_GET['email'];
+        $email =   $_GET['email'];
         $str= "abcdefghijklmnopqrstuvwxyz";
         $verification_token=md5($str);
 
      
-    $stmt = mysqli_prepare($con, "update user set verification_token =?,verification_status= ? where email=? ");
-    mysqli_stmt_bind_param($stmt, "sis", $verification_token, $verification_status, $email);
-    mysqli_stmt_execute($stmt);
-$msg="We've just sent verification link to $email <br/>Please click on the link to confirm subscription";
+        $stmt = mysqli_prepare($con, "update user set verification_token =?,verification_status= ? where email=? ");
+        mysqli_stmt_bind_param($stmt, "sis", $verification_token, $verification_status, $email);
+        mysqli_stmt_execute($stmt);
+        $msg="We've just sent verification link to $email <br/>Please click on the link to confirm subscription";
 
+        $mail = "$email";
+        $name = "xkcd comics on your mail!";
+        $body = "Please click on the below link to confirm subscription: <a href='localhost/comics/check.php?id=$verification_token'><br><div style='text-align:center;'><button><strong>Click here to Verify</strong></button></div></a>";
+        $subject = "Verification mail";
 
-
-
-    $mail = "$email";
-    $name = "xkcd comics on your mail!";
-    $body = "Please click on the below link to confirm subscription: <a href='localhost/comics/check.php?id=$verification_token'>localhost/comics/check.php?id=$verification_token</a>";
-    $subject = "Verification mail";
-
-    $headers = array(
-        'Authorization: Bearer ',
+        $headers = array(
+        'Authorization: Bearer '.API_KEY,
         'Content-Type: application/json'
-    );
+        );
 
-    $data = array(
-        "personalizations" => array(
-            array(
+        $data = array(
+          "personalizations" => array(
+             array(
                 "to" => array(
                     array(
                         "email" => $email,
@@ -54,46 +47,44 @@ $msg="We've just sent verification link to $email <br/>Please click on the link 
                 )
             )
         ),
-        "from" => array(
-            "email" => ""
-        ),
-        "subject" => $subject,
-        "content" => array(
+         "from" => array(
+            "email" => SENDER
+         ),
+         "subject" => $subject,
+         "content" => array(
             array(
                 "type" => "text/html",
                 "value" => $body
             )
-        )
-    );
+         )
+     );
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, "https://api.sendgrid.com/v3/mail/send");
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    $response = curl_exec($ch);
-    curl_close($ch);
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://api.sendgrid.com/v3/mail/send");
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        $response = curl_exec($ch);
+        curl_close($ch);
 
-    if($response);
-    {
-        //echo $msg;
-    }
-    unset($_SESSION['flash_msg']);
+        if($response);
+        {
+        unset($_SESSION['flash_msg']);
 
-    $_SESSION['flash_msg'] = $msg;
+        $_SESSION['flash_msg'] = $msg;
 
-    header("location:index.php");
-    die;
-}
-   
+        header("location:index.php");
+        die;
+        }
+    }  
 }
 
 function addSubscriber($email){
     global $con;
 
-     $str= "abcdefghijklmnopqrstuvwxyz";
+    $str= "abcdefghijklmnopqrstuvwxyz";
     $verification_token=md5($str);
 
      
@@ -106,16 +97,13 @@ function addSubscriber($email){
     $id=mysqli_insert_id($con);
     $msg="We've just sent verification link to $email <br/>Please click on the link to confirm subscription";
 
-
-
-
     $mail = "$email";
     $name = "xkcd comics on your mail!";
-    $body = "Please click on the below link to confirm subscription: <a href='localhost/comics/check.php?id=$verification_token'>localhost/comics/check.php?id=$verification_token</a>";
+    $body = "Please click on the below link to confirm subscription: <a href='localhost/comics/check.php?id=$verification_token'><br><button><div style='text-align:center;'><strong>Click here to Verify</strong></div></a></button>";
     $subject = "Verification mail";
 
     $headers = array(
-        'Authorization: Bearer ',
+        'Authorization: Bearer '.API_KEY,
         'Content-Type: application/json'
     );
 
@@ -131,7 +119,7 @@ function addSubscriber($email){
             )
         ),
         "from" => array(
-            "email" => ""
+            "email" => SENDER
         ),
         "subject" => $subject,
         "content" => array(
@@ -154,9 +142,6 @@ function addSubscriber($email){
 
       unset($_SESSION['flash_msg']);
       $_SESSION['flash_msg'] = $msg;
-    
-
-
 }
 
 
@@ -187,27 +172,21 @@ function verifySubscriber(){
     $result = $stmt->get_result(); 
     $user = $result->fetch_assoc();
 
-    $result = $stmt->get_result(); 
+    $result = $stmt->get_result();
 
-
-
-
-
-     if ($user) {
+    if ($user){
 
          if($user['verification_status'] == 1){
             $msg="You have already subscribed to our services";
           }else {           
            $msg="We have already sent the verification link on your email. Please check your inbox.<br>If not found, 
-           <a href='index.php?reverify=1&email=$email'>click here </a> to get the new verification link";
+           <a href='index.php?reverify=1&email=$email'><button>click here </a></button> to get the new verification link";
           }
              unset($_SESSION['flash_msg']);
            $_SESSION['flash_msg'] = $msg;
-      }else{
+    }else{
            addSubscriber($email);
-      }
-
-     
+         }    
 }
 
 ?>
