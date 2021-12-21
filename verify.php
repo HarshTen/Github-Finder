@@ -28,7 +28,7 @@ function regenerateVerify(){
 
         $mail = "$email";
         $name = "xkcd comics on your mail!";
-        $body = "Please click on the below link to confirm subscription: <a href='localhost/comics/check.php?id=$verification_token'><br><div style='text-align:center;'><button><strong>Click here to Verify</strong></button></div></a>";
+        $body = "Please click on the below button to confirm subscription: <a href='localhost/comics/check.php?id=$verification_token'><br><div style='text-align:center;'><button><strong>Click here to Verify</strong></button></div></a>";
         $subject = "Verification mail";
 
         $headers = array(
@@ -187,6 +187,5 @@ function verifySubscriber(){
     }else{
            addSubscriber($email);
          }    
-}
-
+        }
 ?>
