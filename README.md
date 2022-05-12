@@ -1,13 +1,13 @@
 # Github-Finder
 Github Finder can be used to fetch details of a users Github Profile.
 
-# Techstack
+## Techstack
 - HTML.
 - Bootstrap.
 - Javascript.
 
 
-# API
+## API
 https://api.github.com/users.
 
 
